@@ -1,0 +1,7 @@
+Flask==2.2.2
+Flask-Bcrypt==1.0.1
+PyMySQL==1.0.2
+PyHive[hive]==0.7.0
+
+Note: PyHive dependencies might need system packages like libsasl2-dev.
+Consult the PyHive documentation for installation details on your OS.

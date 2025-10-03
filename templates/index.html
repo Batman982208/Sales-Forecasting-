@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Data Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2c2c2c;
+            --text-color: #f0f0f0;
+            --header-color: #e0e0e0;
+            --border-color: #444;
+            --accent-color: #4f46e5;
+            --accent-hover: #4338ca;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+        }
+        .table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        /* Custom Scrollbar */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 4px;
+        }
+        .date-input {
+            background-color: var(--border-color);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+        .btn-primary {
+            background-color: var(--accent-color);
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+        .loader {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-[var(--card-bg)] rounded-xl shadow-2xl p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-[var(--header-color)]">Sales Dashboard</h1>
+                <p class="text-gray-400 mt-1">Data sourced live from Hive.</p>
+            </div>
+            <a href="/logout" class="text-sm text-gray-300 hover:text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors">Logout</a>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 p-4 bg-black bg-opacity-20 rounded-lg">
+            <div>
+                <label for="start-date" class="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
+                <input type="date" id="start-date" class="date-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+            </div>
+            <div>
+                <label for="end-date" class="block text-sm font-medium text-gray-300 mb-1">End Date</label>
+                <input type="date" id="end-date" class="date-input w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+            </div>
+            <div class="flex items-end gap-2 col-span-1 md:col-span-3 lg:col-span-1">
+                 <button id="filter-btn" class="btn-primary w-full text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--card-bg)] focus:ring-[var(--accent-color)]">Apply Filter</button>
+                 <button id="reset-btn" class="bg-gray-600 hover:bg-gray-700 w-full text-white font-semibold py-2 px-4 rounded-md transition-colors">Reset</button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container relative">
+            <div id="loader" class="loader hidden"></div>
+            <p id="error-message" class="text-center text-red-400 hidden p-4"></p>
+            <table class="min-w-full divide-y divide-[var(--border-color)]">
+                <thead class="bg-black bg-opacity-30 sticky top-0">
+                    <tr>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Order ID</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Product</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Category</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Region</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Quantity</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Price Per Unit</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Total Sales</th>
+                        <th scope="col" class="py-3.5 px-3 text-left text-sm font-semibold text-[var(--header-color)]">Date</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-table-body" class="divide-y divide-[var(--border-color)] bg-[var(--card-bg)]">
+                    <!-- Data will be populated here by JavaScript -->
+                </tbody>
+            </table>
+             <p id="no-data-message" class="text-center text-gray-400 hidden p-8">No data available for the selected criteria.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('sales-table-body');
+            const filterBtn = document.getElementById('filter-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const loader = document.getElementById('loader');
+            const noDataMessage = document.getElementById('no-data-message');
+            const errorMessage = document.getElementById('error-message');
+
+            /**
+             * Populates the table with the provided data.
+             * @param {Array<Object>} data - The array of sales data objects.
+             */
+            const populateTable = (data) => {
+                tableBody.innerHTML = ''; // Clear existing rows
+                noDataMessage.classList.add('hidden');
+
+                if (!data || data.length === 0) {
+                    noDataMessage.classList.remove('hidden');
+                    return;
+                }
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.classList.add('hover:bg-black', 'hover:bg-opacity-20', 'transition-colors');
+                    tr.innerHTML = `
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.OrderID}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.Product}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.Category}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.Region}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.Quantity}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.PricePerUnit ? '$' + parseFloat(row.PricePerUnit).toFixed(2) : 'N/A'}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.TotalSales ? '$' + parseFloat(row.TotalSales).toFixed(2) : 'N/A'}</td>
+                        <td class="whitespace-nowrap py-4 px-3 text-sm text-gray-300">${row.Date}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            };
+
+            /**
+             * Fetches data from the Flask API endpoint.
+             * @param {string} [startDate] - Optional start date in YYYY-MM-DD format.
+             * @param {string} [endDate] - Optional end date in YYYY-MM-DD format.
+             */
+            const fetchData = async (startDate, endDate) => {
+                loader.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                tableBody.innerHTML = ''; // Clear table while loading
+
+                // Construct the query parameters
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                
+                // The base URL for the API endpoint
+                const url = `/api/sales_data?${params.toString()}`;
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    populateTable(data);
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    errorMessage.textContent = `Failed to load data: ${error.message}. Please check the backend connection.`;
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            };
+            
+            // --- Event Listeners ---
+
+            // Filter button click handler
+            filterBtn.addEventListener('click', () => {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                fetchData(startDate, endDate);
+            });
+
+            // Reset button click handler
+            resetBtn.addEventListener('click', () => {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                fetchData(); // Fetch all data
+            });
+
+            // Initial data load when the page is ready
+            fetchData();
+        });
+    </script>
+</body>
+</html>
+
